@@ -1,4 +1,5 @@
-# Coding Agent
+# DevPilot
+
 
 A terminal-based AI coding agent powered by Google Gemini. Give it a task in plain English and it will autonomously explore your codebase, read files, write code, and run scripts until the task is complete.
 

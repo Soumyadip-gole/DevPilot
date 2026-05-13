@@ -53,29 +53,42 @@ def main():
             config=config,
         )
 
-        if response.candidates and response.candidates[0].content:
-            history.append(response.candidates[0].content)
-
-
         if response.function_calls:
-            for function_call in response.function_calls:
-                func_name = function_call.name or ""
-                arguments = function_call.args or {}
-                file_path = arguments.get("file_path") or arguments.get("directory") or ""
-                content = arguments.get("content", "")
-                args = arguments.get("args", "")
-                func_response = call_func(func_name, file_path, content, args)
-                print(f"Function call: {func_name} with arguments {arguments} \n response: {func_response}")
-                history.append(types.Content(role="tool", parts=[types.Part.from_function_response(name=func_name, response={"result": func_response},)]))
+            if response.candidates and response.candidates[0].content:
+                history.append(response.candidates[0].content)
+            tools_results = []
+
+            if response.function_calls:
+                for function_call in response.function_calls:
+                    func_name = function_call.name or ""
+                    arguments = function_call.args or {}
+                    file_path = arguments.get("file_path") or arguments.get("directory") or ""
+                    content = arguments.get("content", "")
+                    args = arguments.get("args", "")
+                    func_response = call_func(func_name, file_path, content, args)
+                    print(f"Function call: {func_name} with arguments {arguments} \n response: {func_response}")
+                    tools_results.append(
+                        types.Part.from_function_response(
+                            name=func_name,
+                            response={"result": func_response}
+                        )
+                    )
+
+                history.append(types.Content(role="tool", parts=tools_results))
+
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=history,
+                    config=config,
+                )
+
         if response.text:
             print("AI response:", response.text)
+  
         if response is None or response.usage_metadata is None:
             print("response is malformed")
             break
         
-        #adding to history
         
-    #print(history)
-
 
 main()
